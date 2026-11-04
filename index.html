@@ -135,25 +135,18 @@
   <p class="kucuk-yazi">Güvercin modelleri: kenchoo, FourthGreen (Sketchfab, CC BY 4.0), Nyilonelycompany · Çevre: Quaternius (CC0) · Sesler: freesound.org (CC0) · Simgeler: Google Material Icons (Apache 2.0)</p>
 </footer>
 <script>
-// İndirme sayısı: GitHub her 6 saatte bir itch.io'dan alıp sayac.json'a yazar (.github/workflows/indirme.yml)
+// İndirme sayısı: GitHub her 6 saatte bir itch.io'dan alıp sayac.json'a yazar (.github/workflows/indirme.yml).
+// İki kaynağa bakılır (biri önbellekte eski kalabilir), büyük olan gösterilir.
 (async () => {
+  const t = Date.now();
   const kaynaklar = [
-    "https://raw.githubusercontent.com/emirgamesstudio/emirgamesstudio.github.io/main/sayac.json?t=" + Date.now(),
-    "sayac.json?t=" + Date.now()
+    "sayac.json?t=" + t,
+    "https://raw.githubusercontent.com/emirgamesstudio/emirgamesstudio.github.io/main/sayac.json?t=" + t
   ];
-  for (const url of kaynaklar) {
-    try {
-      const r = await fetch(url, { cache: "no-store" });
-      if (!r.ok) continue;
-      const n = (await r.json()).indirme;
-      if (n > 0) {
-        // 1234 → "1.230+": sayı yuvarlanır, sonuna + konur
-        const yuvarlak = n >= 1000 ? Math.floor(n / 10) * 10 : Math.floor(n / 10) * 10 || n;
-        document.getElementById("indirme").textContent = yuvarlak.toLocaleString("tr-TR") + "+";
-        return;
-      }
-    } catch (e) { }
-  }
+  const sayilar = await Promise.all(kaynaklar.map(u =>
+    fetch(u, { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => (j && j.indirme) || 0).catch(() => 0)));
+  const n = Math.max(...sayilar);
+  if (n > 0) document.getElementById("indirme").textContent = (Math.floor(n / 10) * 10 || n).toLocaleString("tr-TR") + "+";
 })();
 </script>
 </body>
