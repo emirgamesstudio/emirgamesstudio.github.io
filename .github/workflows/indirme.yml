@@ -20,9 +20,14 @@ jobs:
         env:
           ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
         run: |
-          n=$(curl -sf "https://itch.io/api/1/$ITCH_API_KEY/my-games" | jq '[.games[] | select(.url | test("kurdish-pigeon")) | .downloads_count] | add // 0')
+          KEY=$(echo -n "$ITCH_API_KEY" | tr -d '[:space:]')
+          echo "anahtar uzunluğu: ${#KEY}"
+          resp=$(curl -s "https://itch.io/api/1/$KEY/my-games")
+          echo "$resp" | jq -c '.errors // empty' || echo "cevap JSON değil"
+          echo "$resp" | jq -r '.games[]? | "\(.title) -> \(.downloads_count) indirme"' || true
+          n=$(echo "$resp" | jq '[.games[]? | select(.url | test("kurdish-pigeon")) | .downloads_count] | add // 0' 2>/dev/null || echo 0)
           echo "indirme: $n"
-          if [ "$n" -gt 0 ]; then
+          if [ "${n:-0}" -gt 0 ]; then
             echo "{\"indirme\": $n, \"guncelleme\": \"$(date -u +%Y-%m-%dT%H:%MZ)\"}" > sayac.json
           fi
 
