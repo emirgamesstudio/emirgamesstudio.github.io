@@ -40,7 +40,7 @@
     </div>
     <ul class="sayilar">
       <li><b>20</b><span>güvercin cinsi</span></li>
-      <li><b>540+</b><span>indirme</span></li>
+      <li><b id="indirme">540+</b><span>indirme</span></li>
       <li><b>%100</b><span>ücretsiz</span></li>
     </ul>
   </div>
@@ -134,5 +134,27 @@
   <p><a href="https://emirgamesstudio.itch.io/kurdish-pigeon">itch.io</a> · <a href="gizlilik.html">Gizlilik politikası</a></p>
   <p class="kucuk-yazi">Güvercin modelleri: kenchoo, FourthGreen (Sketchfab, CC BY 4.0), Nyilonelycompany · Çevre: Quaternius (CC0) · Sesler: freesound.org (CC0) · Simgeler: Google Material Icons (Apache 2.0)</p>
 </footer>
+<script>
+// İndirme sayısı: GitHub her 6 saatte bir itch.io'dan alıp sayac.json'a yazar (.github/workflows/indirme.yml)
+(async () => {
+  const kaynaklar = [
+    "https://raw.githubusercontent.com/emirgamesstudio/emirgamesstudio.github.io/main/sayac.json?t=" + Date.now(),
+    "sayac.json?t=" + Date.now()
+  ];
+  for (const url of kaynaklar) {
+    try {
+      const r = await fetch(url, { cache: "no-store" });
+      if (!r.ok) continue;
+      const n = (await r.json()).indirme;
+      if (n > 0) {
+        // 1234 → "1.230+": sayı yuvarlanır, sonuna + konur
+        const yuvarlak = n >= 1000 ? Math.floor(n / 10) * 10 : Math.floor(n / 10) * 10 || n;
+        document.getElementById("indirme").textContent = yuvarlak.toLocaleString("tr-TR") + "+";
+        return;
+      }
+    } catch (e) { }
+  }
+})();
+</script>
 </body>
 </html>
