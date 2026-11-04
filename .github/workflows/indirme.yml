@@ -1,0 +1,34 @@
+name: İndirme sayacı
+
+# itch.io'daki indirme sayısını her 6 saatte bir alıp sayac.json dosyasına yazar.
+# Gerekli gizli anahtar: Settings > Secrets and variables > Actions > ITCH_API_KEY
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  guncelle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: itch.io indirme sayısını al
+        env:
+          ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
+        run: |
+          n=$(curl -sf "https://itch.io/api/1/$ITCH_API_KEY/my-games" | jq '[.games[] | select(.url | test("kurdish-pigeon")) | .downloads_count] | add // 0')
+          echo "indirme: $n"
+          if [ "$n" -gt 0 ]; then
+            echo "{\"indirme\": $n, \"guncelleme\": \"$(date -u +%Y-%m-%dT%H:%MZ)\"}" > sayac.json
+          fi
+
+      - name: Kaydet
+        run: |
+          git config user.name "indirme-sayaci"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add sayac.json
+          git diff --cached --quiet || (git commit -m "İndirme sayısı güncellendi" && git push)
